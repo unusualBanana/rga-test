@@ -4,29 +4,58 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
-  <title>RGA JS Test - Zanuarestu Ramadhani</title>
+  <title>R/GA JS Test - Zanuarestu Ramadhani</title>
 
+  <link rel="stylesheet" href="css/main.css" />
+  <link rel="stylesheet" href="https://js.arcgis.com/4.25/esri/themes/light/main.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+</head>
+
+<body>
+  <div id="loading" class="loader--container">
+    <span class="loader"></span>
+  </div>
+  <div id="mapElement"></div>
+  <div id="optionsDiv" class="esri-widget">
+    <h4 class="esri-widget">JS R/GA Test - Zanuarestu Ramadhani</h4>
+    <p>
+      Set date and time to view a particular data. Click reset to view latest data.
+    </p>
+    <input id="filterDate" type="text" class="esri-widget" placeholder="Select Date Time">
+    <button class="esri-widget" onclick="updateLayer()">Set Date</button>
+    <button class="esri-widget" onclick="resetFilterDate()">Reset</button>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <script src="https://cdn.jsdelivr.net/npm/deck.gl@8.8.24/dist.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@deck.gl/geo-layers@8.8.24/dist.min.js"></script>
-
   <script src="https://unpkg.com/@deck.gl/arcgis@8.8.24/dist.min.js"></script>
-  <link rel="stylesheet" href="https://js.arcgis.com/4.25/esri/themes/light/main.css" />
   <script src="https://js.arcgis.com/4.25/"></script>
 
-  <style>
-    html,
-    body,
-    #mapElement {
-      padding: 0;
-      margin: 0;
-      height: 100%;
-      width: 100%;
-    }
-  </style>
-
   <script>
+    const getDateTimeFormatted = (date) => {
+      if (date == undefined) date = new Date()
+      return flatpickr.formatDate(date, 'Y-m-d H:i')
+    }
+
+    // initialize datepicker
+    const filterDatePickr = flatpickr('#filterDate', {
+      enableTime: true,
+      time_24hr: true,
+      dateFormat: 'Y-m-d H:i',
+      disable: [
+        function (date) {
+          return date > new Date();
+        }
+      ],
+    })
+    filterDatePickr.setDate(getDateTimeFormatted())
+
+    // Initialize Map
     let layer, mapView
     require(['esri/Map', 'esri/views/MapView', 'esri/widgets/BasemapToggle', 'esri/widgets/Compass'], (Map, MapView, BasemapToggle, Compass) => {
+      window.onload = function () { document.getElementById("loading").style.display = "none" }
+
       deck.loadArcGISModules().then(async (arcGIS) => {
         layer = new arcGIS.DeckLayer()
 
@@ -56,7 +85,10 @@
     })
 
     const getTaxiAvailabilityData = async () => {
-      const data = await fetch('https://api.data.gov.sg/v1/transport/taxi-availability', {
+      const dateTime = flatpickr.parseDate(document.getElementById('filterDate').value, 'Y-m-d H:i')
+      const dateTimeToSubmitFormatted = flatpickr.formatDate(dateTime, 'Y-m-dTH:i:00')
+
+      const data = await fetch(`https://api.data.gov.sg/v1/transport/taxi-availability?date_time=${dateTimeToSubmitFormatted}`, {
         headers: {
           accept: 'application/vnd.geo+json',
         }
@@ -82,11 +114,12 @@
 
       layer.deck.layers = [taxis]
     }
-  </script>
-</head>
 
-<body>
-  <div id="mapElement"></div>
+    const resetFilterDate = async () => {
+      filterDatePickr.setDate(getDateTimeFormatted())
+      await updateLayer()
+    }
+  </script>
 </body>
 
 </html>
