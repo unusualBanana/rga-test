@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <title>RGA JS Test - Zanuarestu Ramadhani</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/deck.gl@8.8.24/dist.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@deck.gl/geo-layers@8.8.24/dist.min.js"></script>
+
+  <script src="https://unpkg.com/@deck.gl/arcgis@8.8.24/dist.min.js"></script>
+  <link rel="stylesheet" href="https://js.arcgis.com/4.25/esri/themes/light/main.css" />
+  <script src="https://js.arcgis.com/4.25/"></script>
+
+  <style>
+    html,
+    body,
+    #mapElement {
+      padding: 0;
+      margin: 0;
+      height: 100%;
+      width: 100%;
+    }
+  </style>
+
+  <script>
+    let layer, mapView
+    require(['esri/Map', 'esri/views/MapView', 'esri/widgets/BasemapToggle', 'esri/widgets/Compass'], (Map, MapView, BasemapToggle, Compass) => {
+      deck.loadArcGISModules().then(async (arcGIS) => {
+        layer = new arcGIS.DeckLayer()
+
+        mapView = new MapView({
+          container: 'mapElement',
+          map: new Map({
+            basemap: 'osm',
+            layers: [layer]
+          }),
+          center: [103.82, 1.35],
+          zoom: 12
+        })
+
+        const toggle = new BasemapToggle({
+          view: mapView,
+          nextBasemap: "dark-gray-vector"
+        })
+        mapView.ui.add(toggle, "top-right")
+
+        const compassWidget = new Compass({ view: mapView })
+        mapView.ui.add(compassWidget, "top-left")
+
+        mapView.ui.add("optionsDiv", "bottom-right");
+
+        await updateLayer()
+      })
+    })
+
+    const getTaxiAvailabilityData = async () => {
+      const data = await fetch('https://api.data.gov.sg/v1/transport/taxi-availability', {
+        headers: {
+          accept: 'application/vnd.geo+json',
+        }
+      })
+      const rawData = await data.json()
+      return rawData?.features[0]
+    }
+
+    const updateLayer = async () => {
+      const taxiAvailability = await getTaxiAvailabilityData()
+
+      const taxis = new deck.GeoJsonLayer({
+        id: "taxi-scatterplot-layer",
+        data: taxiAvailability,
+        pickable: true,
+        filled: true,
+        pointType: 'circle',
+        getFillColor: [0, 96, 192, 200],
+        pointRadiusMinPixels: 7,
+        radiusMaxPixels: 50,
+        getLineWidth: 0,
+      })
+
+      layer.deck.layers = [taxis]
+    }
+  </script>
+</head>
+
+<body>
+  <div id="mapElement"></div>
+</body>
+
+</html>
