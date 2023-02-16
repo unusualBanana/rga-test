@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <title>RGA CSS Test - Zanuarestu Ramadhani</title>
+  <link rel="stylesheet" href="css/main.css" />
+</head>
+
+<body>
+  <div class="backdrop">
+    <h1 class="text" id="titleToChange"></h1>
+    <div class="overlay"></div>
+  </div>
+  <button class="button clickme" onclick="console.log('Hello, this is a submission from Zanuarestu Ramadhani')">Click me!</button>
+  <script>
+    setInterval(() => {
+      const elem = document.getElementById('titleToChange')
+      elem.innerText = Math.random().toString().slice(2, 11)
+    }, 375);
+  </script>
+</body>
+
+</html>
